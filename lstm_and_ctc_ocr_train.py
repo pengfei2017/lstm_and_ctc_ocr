@@ -68,6 +68,7 @@ def train():
     with tf.name_scope('loss'):
         loss = tf.nn.ctc_loss(targets, logits, seq_len)
         cost = tf.reduce_mean(loss)  # 计算识别的损失率，即误差
+        tf.scalar_summary('loss', cost)  # 可视化损失率变化
     with tf.name_scope('train'):
         optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
                                                momentum=common.MOMENTUM).minimize(cost, global_step=global_step)
@@ -78,6 +79,7 @@ def train():
 
         # Accuracy: label error rate
         acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), targets))  # 计算识别的准确率，即精度
+        tf.scalar_summary('accuracy', acc)  # 可视化准确率变化
 
     # Initializate the weights and biases
     init = tf.global_variables_initializer()
@@ -94,6 +96,9 @@ def train():
         # 每批训练64张图组成的序列
         feed = {inputs: train_inputs, targets: train_targets, seq_len: train_seq_len}
         b_cost, steps, _ = session.run([cost, global_step, optimizer], feed)
+        if steps % 50 == 0:
+            result = session.run(merged, feed_dict=feed)  # merged也是需要run的
+            writer.add_summary(result, steps)  # result是summary类型的，需要放入writer中，i步数（x轴）
         if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每一千步存一次模型
             do_report()  # 每一千步计算一次识别出字符个数的准确率
             save_path = saver.save(session, "models/ocr.model", global_step=steps)
@@ -144,6 +149,7 @@ def train():
                 log = "Epoch {}/{}, steps = {}, train_cost = {:.3f}, train_ler = {:.3f}, val_cost = {:.3f}, val_ler = {:.3f}, time = {:.3f}s, learning_rate = {}"
                 print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
                                  time.time() - start, lr))
+            writer.close()
 
 
 if __name__ == '__main__':
