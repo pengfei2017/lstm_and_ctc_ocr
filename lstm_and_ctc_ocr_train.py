@@ -14,7 +14,7 @@ import utils
 
 from utils import decode_sparse_tensor
 
-import warpctc_tensorflow as warpctc
+import warpctc_tensorflow
 
 # Some configs
 # Accounting the 0th indice +  space + blank label = 28 characters
@@ -94,7 +94,6 @@ def train():
         # 每批训练64张图组成的序列
         feed = {inputs: train_inputs, targets: train_targets, seq_len: train_seq_len}
         b_cost, steps, _ = session.run([cost, global_step, optimizer], feed)
-        do_report()  # todo 我加的，最后要删掉的
         if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每一千步存一次模型
             do_report()  # 每一千步计算一次识别出字符个数的准确率
             save_path = saver.save(session, "models/ocr.model", global_step=steps)
@@ -103,47 +102,48 @@ def train():
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    with tf.Session(config=config) as session:
-        merged = tf.summary.merge_all()
-        writer = tf.summary.FileWriter("logs/", session.graph)
-        session.run(init)
-        saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
-        for curr_epoch in range(num_epochs):  # 训练10000次
-            # variables = tf.all_variables()
-            # for i in variables:
-            #     print(i.name)
+    with tf.get_default_graph()._kernel_label_map({"CTCLoss": "WarpCTC"}):
+        with tf.Session(config=config) as session:
+            merged = tf.summary.merge_all()
+            writer = tf.summary.FileWriter("logs/", session.graph)
+            session.run(init)
+            saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
+            for curr_epoch in range(num_epochs):  # 训练10000次
+                # variables = tf.all_variables()
+                # for i in variables:
+                #     print(i.name)
 
-            print("Epoch.......", curr_epoch)  # 当前是第几次训练
-            train_cost = train_ler = 0
-            for batch in range(common.BATCHES):  # 每批次训练100次
-                start = time.time()  # 每一次训练开始的时间
-                train_inputs, train_targets, train_seq_len = utils.get_data_set('train', batch * common.BATCH_SIZE,
-                                                                                (batch + 1) * common.BATCH_SIZE)
+                print("Epoch.......", curr_epoch)  # 当前是第几次训练
+                train_cost = train_ler = 0
+                for batch in range(common.BATCHES):  # 每批次训练100次
+                    start = time.time()  # 每一次训练开始的时间
+                    train_inputs, train_targets, train_seq_len = utils.get_data_set('train', batch * common.BATCH_SIZE,
+                                                                                    (batch + 1) * common.BATCH_SIZE)
 
-                #
-                #  print("get data time", time.time() - start)
-                start = time.time()
-                c, steps = do_batch()
-                train_cost += c * common.BATCH_SIZE
-                seconds = time.time() - start  # 每一次训练花费的时间
-                print("Step:", steps, ", batch seconds:", seconds, ", cost:", c)
+                    #
+                    #  print("get data time", time.time() - start)
+                    start = time.time()
+                    c, steps = do_batch()
+                    train_cost += c * common.BATCH_SIZE
+                    seconds = time.time() - start  # 每一次训练花费的时间
+                    print("Step:", steps, ", batch seconds:", seconds, ", cost:", c)
 
-            train_cost /= common.TRAIN_SIZE  # 本批100次训练的总损失率
-            # train_ler /= common.TRAIN_SIZE
-            val_feed = {inputs: train_inputs,
-                        targets: train_targets,
-                        seq_len: train_seq_len}
+                train_cost /= common.TRAIN_SIZE  # 本批100次训练的总损失率
+                # train_ler /= common.TRAIN_SIZE
+                val_feed = {inputs: train_inputs,
+                            targets: train_targets,
+                            seq_len: train_seq_len}
 
-            # 总共训练10000次，每次训练100批，每批训练64步，每步是一张图片
-            # val_cost指计算cost操作的返回值，是误差率；
-            # val_ler指计算acc操作的返回值，是准确率；
-            # lr指计算learning_rate操作的返回值，是学习率；
-            # steps指计算global_step操作的返回值，是已经训练的总次数；
-            val_cost, val_ler, lr, steps = session.run([cost, acc, learning_rate, global_step], feed_dict=val_feed)
+                # 总共训练10000次，每次训练100批，每批训练64步，每步是一张图片
+                # val_cost指计算cost操作的返回值，是误差率；
+                # val_ler指计算acc操作的返回值，是准确率；
+                # lr指计算learning_rate操作的返回值，是学习率；
+                # steps指计算global_step操作的返回值，是已经训练的总次数；
+                val_cost, val_ler, lr, steps = session.run([cost, acc, learning_rate, global_step], feed_dict=val_feed)
 
-            log = "Epoch {}/{}, steps = {}, train_cost = {:.3f}, train_ler = {:.3f}, val_cost = {:.3f}, val_ler = {:.3f}, time = {:.3f}s, learning_rate = {}"
-            print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
-                             time.time() - start, lr))
+                log = "Epoch {}/{}, steps = {}, train_cost = {:.3f}, train_ler = {:.3f}, val_cost = {:.3f}, val_ler = {:.3f}, time = {:.3f}s, learning_rate = {}"
+                print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
+                                 time.time() - start, lr))
 
 
 if __name__ == '__main__':
