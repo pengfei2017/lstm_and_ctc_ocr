@@ -14,6 +14,8 @@ import utils
 
 from utils import decode_sparse_tensor
 
+import warpctc_tensorflow as warpctc
+
 # Some configs
 # Accounting the 0th indice +  space + blank label = 28 characters
 # num_classes = ord('9') - ord('0') + 1 + 1 + 1
@@ -47,7 +49,8 @@ def report_accuracy(decoded_list, test_targets):
     for idx, number in enumerate(original_list):
         detect_number = detected_list[idx]
         hit = (number == detect_number)
-        print("是否识别当前图片：", hit, "  当前图片的标记字符为：", number, "(", len(number), "位 ) <-------> 从当前图片中识别出的字符为：", detect_number,
+        print("是否识别当前图片：", hit, "  当前图片的标记字符为：", number, "(", len(number), "位 ) <-------> 从当前图片中识别出的字符为：",
+              detect_number,
               "(", len(detect_number), "位 )")
         if hit:
             true_numer = true_numer + 1
