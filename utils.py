@@ -128,3 +128,4 @@ def decode_sparse_tensor(sparse_tensor):
 
 if __name__ == '__main__':
     test_inputs, test_targets, test_seq_len = get_data_set('test')
+    print(test_inputs.shape)

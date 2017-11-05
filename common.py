@@ -54,7 +54,7 @@ CHARS = list(DIGITS)
 # CHARS = list(DIGITS + LETTERS + CHINESES)
 
 LENGTHS = [6, 6]  # the number of digits varies from LENGTHS[0] to LENGTHS[1] in a image
-TEST_SIZE = 100
+TEST_SIZE = 100  # 测试用的数据集的大小（即整个测试数据集的样本总数，共100张图）
 ADD_BLANK = True  # if add a blank between digits
 LEARNING_RATE_DECAY_FACTOR = 0.9  # The learning rate decay factor
 INITIAL_LEARNING_RATE = 1e-3
@@ -66,7 +66,7 @@ BATCHES = 100
 
 OUTPUT_SHAPE = (BATCH_SIZE, 256)
 
-TRAIN_SIZE = BATCH_SIZE * BATCHES  # 训练一个Epoch的样本数（即整个数据集的样本数，也即6400个样本，再即6400张图）
+TRAIN_SIZE = BATCH_SIZE * BATCHES  # 训练一个Epoch的样本数（即整个训练数据集的样本数，也即6400个样本，再即6400张图）
 
 MOMENTUM = 0.9
 REPORT_STEPS = 1000
