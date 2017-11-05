@@ -114,43 +114,50 @@ def train():
             writer = tf.summary.FileWriter("logs/", session.graph)
             session.run(init)
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
-            for curr_epoch in range(num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
-                curr_epoch_start = time.time()  # 当前Epoch训练开始的时间
-                # variables = tf.all_variables()
-                # for i in variables:
-                #     print(i.name)
+            with tf.name_scope('Epoch'):
+                for curr_epoch in range(num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
+                    curr_epoch_name = 'Epoch' + curr_epoch
+                    with tf.name_scope(curr_epoch_name):
+                        curr_epoch_start = time.time()  # 当前Epoch训练开始的时间
+                        # variables = tf.all_variables()
+                        # for i in variables:
+                        #     print(i.name)
 
-                print("Epoch（第几个完整数据集的训练）.......", curr_epoch)  # 当前是第几次对完整数据集进行训练
-                train_cost = train_ler = 0
-                for batch in range(
-                        common.BATCHES):  # BATCH_SIZE = 64 每批训练64个样本（即64张图），那么训练完一次整个数据集（一个Epoch）需要迭代6400／64=100次，即100个批次；迭代次数就是把整个数据集训练一遍需要几批
-                    get_data_start = time.time()  # 当前批次获取数据开始的时间
-                    train_inputs, train_targets, train_seq_len = utils.get_data_set('train', batch * common.BATCH_SIZE,
-                                                                                    (
-                                                                                        batch + 1) * common.BATCH_SIZE)  # 每批取出64个样本即64张图进行训练
+                        print("Epoch（第几个完整数据集的训练）.......", curr_epoch)  # 当前是第几次对完整数据集进行训练
+                        train_cost = train_ler = 0
+                        for batch in range(
+                                common.BATCHES):  # BATCH_SIZE = 64 每批训练64个样本（即64张图），那么训练完一次整个数据集（一个Epoch）需要迭代6400／64=100次，即100个批次；迭代次数就是把整个数据集训练一遍需要几批
+                            get_data_start = time.time()  # 当前批次获取数据开始的时间
+                            train_inputs, train_targets, train_seq_len = utils.get_data_set('train',
+                                                                                            batch * common.BATCH_SIZE,
+                                                                                            (
+                                                                                                batch + 1) * common.BATCH_SIZE)  # 每批取出64个样本即64张图进行训练
+                            # todo tf.summary.image('input', image_shaped_input, 10)
+                            get_data_time = time.time() - get_data_start  # 当前批次获取数据花费的时间
+                            start = time.time()  # 当前批次训练开始的时间
+                            c, steps = do_batch()  # 每训练一批（或者叫每迭代一次，也可叫每训练64张图）会更新一下神经网络模型各层的weights和biases
+                            train_cost += c * common.BATCH_SIZE  # 累加每批中所有样本的损失率（也即当前批次64张图乘以当批的平均损失率c）计算当前Epoch（一次整个数据的训练）总的损失率
+                            seconds = time.time() - start  # 当前批次训练花费的时间
+                            print("Step（在10000个Epoch中的批次编号）:", steps, ", batch seconds（当前批次训练花费的时间）:", seconds,
+                                  ", batch get data seconds（当前批次获取数据花费的时间）:", get_data_time, ", batch cost（当前批次的损失率）:",
+                                  c)
 
-                    get_data_time = time.time() - get_data_start  # 当前批次获取数据花费的时间
-                    start = time.time()  # 当前批次训练开始的时间
-                    c, steps = do_batch()  # 每训练一批（或者叫每迭代一次，也可叫每训练64张图）会更新一下神经网络模型各层的weights和biases
-                    train_cost += c * common.BATCH_SIZE  # 累加每批中所有样本的损失率（也即当前批次64张图乘以当批的平均损失率c）计算当前Epoch（一次整个数据的训练）总的损失率
-                    seconds = time.time() - start  # 当前批次训练花费的时间
-                    print("Step（在10000个Epoch中的批次编号）:", steps, ", batch seconds（当前批次训练花费的时间）:", seconds,
-                          ", batch get data seconds（当前批次获取数据花费的时间）:", get_data_time, ", batch cost（当前批次的损失率）:", c)
+                        train_cost /= common.TRAIN_SIZE  # 计算当前Epoch（即整个数据集的样本数，也即6400个样本，再即6400张图）的每个样本（也即每张图）的损失率
+                        # train_ler /= common.TRAIN_SIZE
+                        val_feed = {inputs: train_inputs, targets: train_targets,
+                                    seq_len: train_seq_len}  # 用当前Epoch的最后一批样本数据来取
 
-                train_cost /= common.TRAIN_SIZE  # 计算当前Epoch（即整个数据集的样本数，也即6400个样本，再即6400张图）的每个样本（也即每张图）的损失率
-                # train_ler /= common.TRAIN_SIZE
-                val_feed = {inputs: train_inputs, targets: train_targets, seq_len: train_seq_len}  # 用当前Epoch的最后一批样本数据来取
+                        # 总共对整个数据集训练10000遍，每遍训练100批，每批训练64个样本，每个样本是一张图片
+                        # val_cost指计算cost操作的返回值，是当前的误差率；
+                        # val_ler指计算acc操作的返回值，是当前的准确率；
+                        # lr指计算learning_rate操作的返回值，是当前的学习率；
+                        # steps指计算global_step操作的返回值，是已经训练的总批数；
+                        val_cost, val_ler, lr, steps = session.run([cost, acc, learning_rate, global_step],
+                                                                   feed_dict=val_feed)
 
-                # 总共对整个数据集训练10000遍，每遍训练100批，每批训练64个样本，每个样本是一张图片
-                # val_cost指计算cost操作的返回值，是当前的误差率；
-                # val_ler指计算acc操作的返回值，是当前的准确率；
-                # lr指计算learning_rate操作的返回值，是当前的学习率；
-                # steps指计算global_step操作的返回值，是已经训练的总批数；
-                val_cost, val_ler, lr, steps = session.run([cost, acc, learning_rate, global_step], feed_dict=val_feed)
-
-                log = "Epoch（对整个数据集进行的第几次训练）{}/{}, （第几批训练）steps = {}, （当前Epoch中平均每张图的损失率）train_cost = {:.3f}, （当前Epoch中平均每张图的精确度）train_ler = {:.3f}, （当前的损失率）val_cost = {:.3f}, （当前的精确度）val_ler = {:.3f}, （当前Epoch花费的时间）time = {:.3f}s, （当前的学习率）learning_rate = {}"
-                print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
-                                 time.time() - curr_epoch_start, lr))
+                        log = "Epoch（对整个数据集进行的第几次训练）{}/{}, （第几批训练）steps = {}, （当前Epoch中平均每张图的损失率）train_cost = {:.3f}, （当前Epoch中平均每张图的精确度）train_ler = {:.3f}, （当前的损失率）val_cost = {:.3f}, （当前的精确度）val_ler = {:.3f}, （当前Epoch花费的时间）time = {:.3f}s, （当前的学习率）learning_rate = {}"
+                        print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
+                                         time.time() - curr_epoch_start, lr))
             writer.close()  # 10000个Epoch训练完时关闭summary的FileWriter
 
 

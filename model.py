@@ -39,6 +39,11 @@ def convolutional_layers():
     """
     with tf.name_scope('inputs'):
         inputs = tf.placeholder(tf.float32, [None, None, common.OUTPUT_SHAPE[0]], name='inputs')
+    with tf.name_scope('input_expand_dims'):
+        x_expanded = tf.expand_dims(inputs, 3)
+    with tf.name_scope('input_reshape'):
+        image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
+        tf.summary.image('input', image_shaped_input, 64)  # todo 64有问题
     with tf.name_scope('conv'):
         # First layer
         with tf.name_scope('layer1'):
@@ -49,7 +54,6 @@ def convolutional_layers():
             with tf.name_scope('biases'):
                 b_conv1 = bias_variable([48], name='b')
                 tf.summary.histogram(layer_name + '/biases', b_conv1)
-            x_expanded = tf.expand_dims(inputs, 3)
             h_conv1 = tf.nn.relu(conv2d(x_expanded, W_conv1) + b_conv1)
             h_pool1 = max_pool(h_conv1, ksize=(2, 2), stride=(2, 2))
             tf.summary.histogram(layer_name + '/outputs', h_pool1)
