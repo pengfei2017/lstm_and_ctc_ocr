@@ -100,3 +100,8 @@ print('logits2', logits.shape)
 # Time major
 logits = tf.transpose(logits, (1, 0, 2))
 print('logits3', logits.shape)
+
+df = [[1, 2, 3, 4],
+      [4, 5.6, 7]]
+df = tf.reshape(features, [shape[0], 256, 1])
+print(list(df))

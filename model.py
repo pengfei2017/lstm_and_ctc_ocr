@@ -159,7 +159,7 @@ def get_train_model(is_training=True):
     # Tip: Is tf.zeros_initializer the same?
     b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="b")
 
-    # Doing the affine projection
+    # Doing the affine projection(做仿射投影) 这个就是lstm_ctc要的最终结果[time_step,num_class]=[64*256,12]
     logits = tf.matmul(outputs, W) + b
 
     # Reshaping back to the original shape
