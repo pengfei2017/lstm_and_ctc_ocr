@@ -158,6 +158,10 @@ def train():
                         log = "Epoch（对整个数据集进行的第几次训练）{}/{}, （第几批训练）steps = {}, （当前Epoch中平均每张图的损失率）train_cost = {:.3f}, （当前Epoch中平均每张图的精确度）train_ler = {:.3f}, （当前的损失率）val_cost = {:.3f}, （当前的精确度）val_ler = {:.3f}, （当前Epoch花费的时间）time = {:.3f}s, （当前的学习率）learning_rate = {}"
                         print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
                                          time.time() - curr_epoch_start, lr))
+                        with tf.name_scope('train_cost'):
+                            tf.summary.scalar('train_cost', train_cost)
+                        with tf.name_scope('train_ler'):
+                            tf.summary.scalar('train_ler', train_ler)
             writer.close()  # 10000个Epoch训练完时关闭summary的FileWriter
 
 
