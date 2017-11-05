@@ -61,7 +61,7 @@ def train():
                                                common.DECAY_STEPS,
                                                common.LEARNING_RATE_DECAY_FACTOR,
                                                staircase=True)  # 计算训练的学习率
-    logits, inputs, targets, seq_len, W, b = model.get_train_model()
+    logits, inputs, targets, seq_len, W, b = model.get_train_model()  # 这时候还只是定义模型的计算图，只有各个变量的形状，还没有任何计算，所有没有值呢还
     with tf.name_scope('loss'):
         loss = tf.nn.ctc_loss(targets, logits, seq_len)
         cost = tf.reduce_mean(loss)  # 计算识别的损失率，即误差
