@@ -22,10 +22,7 @@ import warpctc_tensorflow
 num_classes = common.num_classes
 print("num_classes", num_classes)
 # Hyper-parameters
-num_epochs = 10000  # 训练完整的数据集num_epochs次 (当一个完整的数据集通过了神经网络一次并且返回了一次，这个过程称为一个 epoch)
-num_hidden = 64
-num_layers = 1
-print("num_hidden:", num_hidden, "num_layers:", num_layers)
+print("num_hidden:", common.num_hidden, "num_layers:", common.num_layers)
 
 # THE MAIN CODE!
 
@@ -115,7 +112,7 @@ def train():
             session.run(init)
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
             with tf.name_scope('Epoch'):
-                for curr_epoch in range(num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
+                for curr_epoch in range(common.num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
                     curr_epoch_name = 'Epoch' + curr_epoch
                     with tf.name_scope(curr_epoch_name):
                         curr_epoch_start = time.time()  # 当前Epoch训练开始的时间
@@ -156,7 +153,8 @@ def train():
                                                                    feed_dict=val_feed)
 
                         log = "Epoch（对整个数据集进行的第几次训练）{}/{}, （第几批训练）steps = {}, （当前Epoch中平均每张图的损失率）train_cost = {:.3f}, （当前Epoch中平均每张图的精确度）train_ler = {:.3f}, （当前的损失率）val_cost = {:.3f}, （当前的精确度）val_ler = {:.3f}, （当前Epoch花费的时间）time = {:.3f}s, （当前的学习率）learning_rate = {}"
-                        print(log.format(curr_epoch + 1, num_epochs, steps, train_cost, train_ler, val_cost, val_ler,
+                        print(log.format(curr_epoch + 1, common.num_epochs, steps, train_cost, train_ler, val_cost,
+                                         val_ler,
                                          time.time() - curr_epoch_start, lr))
                         with tf.name_scope('train_cost'):
                             tf.summary.scalar('train_cost', train_cost)

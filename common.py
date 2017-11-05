@@ -76,7 +76,7 @@ REPORT_STEPS = 1000
 KEEP_PROB = 0.5
 
 # Hyper-parameters
-num_epochs = 2000
+num_epochs = 10000 # 训练完整的数据集num_epochs次 (当一个完整的数据集通过了神经网络一次并且返回了一次，这个过程称为一个 epoch)
 num_hidden = 128
 num_layers = 2
 
