@@ -136,8 +136,8 @@ def train():
                             train_cost += c * common.BATCH_SIZE  # 累加每批中所有样本的损失率（也即当前批次64张图乘以当批的平均损失率c）计算当前Epoch（一次整个数据的训练）总的损失率
                             seconds = time.time() - start  # 当前批次训练花费的时间
                             print("Step（在10000个Epoch中的批次编号）:", steps, ", batch seconds（当前批次训练花费的时间）:", seconds,
-                                  ", batch get data seconds（当前批次获取数据花费的时间）:", get_data_time, ", batch cost（当前批次的损失率）:",
-                                  c)
+                                  ", batch cost（当前批次的损失率）:",
+                                  c, ", batch get data seconds（当前批次获取数据花费的时间）:", get_data_time)
 
                         train_cost /= common.TRAIN_SIZE  # 计算当前Epoch（即整个数据集的样本数，也即6400个样本，再即6400张图）的每个样本（也即每张图）的损失率
                         # train_ler /= common.TRAIN_SIZE
