@@ -57,3 +57,46 @@ shape = tf.shape(features)
 print('features1_shape', shape)
 features = tf.reshape(features, [shape[0], 256, 1])  # batchsize * outputshape * 1
 print('features2', features.shape)
+
+
+def lstm_cell(is_training=True):
+    lstm_cell = tf.contrib.rnn.LSTMCell(128)
+    return lstm_cell
+
+
+# 1d array of size [batch_size]
+seq_len = tf.placeholder(tf.int32, [None])
+
+# Stacking rnn cells
+stack = tf.contrib.rnn.MultiRNNCell([lstm_cell() for _ in range(0, 2)],
+                                    state_is_tuple=True)
+
+# The second output is the last state and we will no use that
+outputs, _ = tf.nn.dynamic_rnn(stack, features, seq_len,
+                               dtype=tf.float32)
+print('outputs1', outputs.shape)
+
+# Reshaping to apply the same weights over the timesteps
+outputs = tf.reshape(outputs, [-1, 128])
+print('outputs2', outputs.shape)
+
+num_classes = 12
+
+# Truncated normal with mean 0 and stdev=0.1
+W = tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.1), name="W")
+print('W4', W.shape)
+# Zero initialization
+# Tip: Is tf.zeros_initializer the same?
+b = tf.Variable(tf.constant(0., shape=[num_classes]), name="b")
+
+# Doing the affine projection
+logits = tf.matmul(outputs, W) + b
+print('logits1', logits.shape)
+
+# Reshaping back to the original shape
+logits = tf.reshape(logits, [64, -1, num_classes])
+print('logits2', logits.shape)
+
+# Time major
+logits = tf.transpose(logits, (1, 0, 2))
+print('logits3', logits.shape)

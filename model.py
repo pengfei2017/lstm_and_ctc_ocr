@@ -166,6 +166,12 @@ def get_train_model(is_training=True):
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
 
     # Time major
-    logits = tf.transpose(logits, (1, 0, 2))
+    logits = tf.transpose(logits,
+                          (1, 0,
+                           2))  # transpose (1, 0, 2)理解，本来的第一维，第二维，第三维的顺序是（0，1，2），现在写成（1，0，2）说明是第一维和第二维交换一下位置，第三维还在原来的位置保持不变
 
     return logits, inputs, targets, seq_len, W, b
+
+
+if __name__ == '__main__':
+    logits, inputs, targets, seq_len, W, b = get_train_model()
