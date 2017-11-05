@@ -65,7 +65,7 @@ def train():
     with tf.name_scope('loss'):
         loss = tf.nn.ctc_loss(targets, logits, seq_len)
         cost = tf.reduce_mean(loss)  # 计算识别的损失率，即误差
-        tf.scalar_summary('loss', cost)  # 可视化损失率变化
+        tf.summary.scalar('loss', cost)  # 可视化损失率变化
     with tf.name_scope('train'):
         optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
                                                momentum=common.MOMENTUM).minimize(cost, global_step=global_step)
@@ -76,7 +76,7 @@ def train():
 
         # Accuracy: label error rate
         acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), targets))  # 计算识别的准确率，即精度
-        tf.scalar_summary('accuracy', acc)  # 可视化准确率变化
+        tf.summary.scalar('accuracy', acc)  # 可视化准确率变化
 
     # Initializate the weights and biases
     init = tf.global_variables_initializer()
@@ -113,7 +113,7 @@ def train():
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
             with tf.name_scope('Epoch'):
                 for curr_epoch in range(common.num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
-                    curr_epoch_name = 'Epoch' + curr_epoch
+                    curr_epoch_name = 'Epoch%d' % curr_epoch
                     with tf.name_scope(curr_epoch_name):
                         curr_epoch_start = time.time()  # 当前Epoch训练开始的时间
                         # variables = tf.all_variables()
