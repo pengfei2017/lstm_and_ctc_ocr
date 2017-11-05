@@ -22,7 +22,7 @@ import warpctc_tensorflow
 num_classes = common.num_classes
 print("num_classes", num_classes)
 # Hyper-parameters
-num_epochs = 10000  # 训练次数
+num_epochs = 10000  # 训练完整的数据集num_epochs次 (当一个完整的数据集通过了神经网络一次并且返回了一次，这个过程称为一个 epoch)
 num_hidden = 64
 num_layers = 1
 print("num_hidden:", num_hidden, "num_layers:", num_layers)
@@ -58,7 +58,7 @@ def report_accuracy(decoded_list, test_targets):
 
 
 def train():
-    global_step = tf.Variable(0, trainable=False)  # todo 这个是什么
+    global_step = tf.Variable(0, trainable=False)  # 代表总共训练了多少批，每批训练64个样本（即64张图），每训练一批就是一个迭代，故也可表示位总共迭代了多少次了
     learning_rate = tf.train.exponential_decay(common.INITIAL_LEARNING_RATE,
                                                global_step,
                                                common.DECAY_STEPS,
@@ -93,17 +93,18 @@ def train():
         # decoded_list = decode_sparse_tensor(dd)
 
     def do_batch():
+        # 每训练一批数据（即每迭代一次，也即每训练64个图片）系统会更新一下神经网络模型中各层的weights和biases
         # 每批训练64张图组成的序列
         feed = {inputs: train_inputs, targets: train_targets, seq_len: train_seq_len}
         b_cost, steps, _ = session.run([cost, global_step, optimizer], feed)
         if steps % 50 == 0:
             result = session.run(merged, feed_dict=feed)  # merged也是需要run的
             writer.add_summary(result, steps)  # result是summary类型的，需要放入writer中，i步数（x轴）
-        if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每一千步存一次模型
-            do_report()  # 每一千步计算一次识别出字符个数的准确率
+        if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每训练1000批数据（即迭代1000次，即训练10次整个数据集）存一次模型
+            do_report()  # 每训练10次整个数据集用测试图片数据计算一次识别出字符个数的准确率
             save_path = saver.save(session, "models/ocr.model", global_step=steps)
             # print(save_path)
-        return b_cost, steps
+        return b_cost, steps  # 返回当前批次的损失率batch_cost和当前批次的编号
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -113,17 +114,19 @@ def train():
             writer = tf.summary.FileWriter("logs/", session.graph)
             session.run(init)
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
-            for curr_epoch in range(num_epochs):  # 训练10000次
+            for curr_epoch in range(num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
                 # variables = tf.all_variables()
                 # for i in variables:
                 #     print(i.name)
 
-                print("Epoch.......", curr_epoch)  # 当前是第几次训练
+                print("Epoch.......", curr_epoch)  # 当前是第几次对完整数据集进行训练
                 train_cost = train_ler = 0
-                for batch in range(common.BATCHES):  # 每批次训练100次
+                for batch in range(
+                        common.BATCHES):  # BATCH_SIZE = 64 每批训练64个样本（即64张图），那么训练完一次整个数据集（一个Epoch）需要迭代6400／64=100次，即100个批次；迭代次数就是把整个数据集训练一遍需要几批
                     start = time.time()  # 每一次训练开始的时间
                     train_inputs, train_targets, train_seq_len = utils.get_data_set('train', batch * common.BATCH_SIZE,
-                                                                                    (batch + 1) * common.BATCH_SIZE)
+                                                                                    (
+                                                                                        batch + 1) * common.BATCH_SIZE)  # 每批取出64个样本即64张图进行训练
 
                     #
                     #  print("get data time", time.time() - start)
