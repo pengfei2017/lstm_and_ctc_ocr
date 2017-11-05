@@ -123,7 +123,7 @@ def train():
                 train_cost = train_ler = 0
                 for batch in range(
                         common.BATCHES):  # BATCH_SIZE = 64 每批训练64个样本（即64张图），那么训练完一次整个数据集（一个Epoch）需要迭代6400／64=100次，即100个批次；迭代次数就是把整个数据集训练一遍需要几批
-                    start = time.time()  # 每一次训练开始的时间
+                    start = time.time()  # 当前批次训练开始的时间
                     train_inputs, train_targets, train_seq_len = utils.get_data_set('train', batch * common.BATCH_SIZE,
                                                                                     (
                                                                                         batch + 1) * common.BATCH_SIZE)  # 每批取出64个样本即64张图进行训练
@@ -131,9 +131,9 @@ def train():
                     #
                     #  print("get data time", time.time() - start)
                     start = time.time()
-                    c, steps = do_batch()
-                    train_cost += c * common.BATCH_SIZE
-                    seconds = time.time() - start  # 每一次训练花费的时间
+                    c, steps = do_batch()  # 每训练一批（或者叫每迭代一次，也可叫每训练64张图）会更新一下神经网络模型各层的weights和biases
+                    train_cost += c * common.BATCH_SIZE  # 累加每批的损失率计算当前Epoch（一次整个数据的训练）总的损失率
+                    seconds = time.time() - start  # 当前批次训练花费的时间
                     print("Step:", steps, ", batch seconds:", seconds, ", cost:", c)
 
                 train_cost /= common.TRAIN_SIZE  # 本批100次训练的总损失率
