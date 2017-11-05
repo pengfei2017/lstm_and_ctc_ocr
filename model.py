@@ -43,7 +43,7 @@ def convolutional_layers():
         x_expanded = tf.expand_dims(inputs, 3)
     with tf.name_scope('input_reshape'):
         image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
-        tf.summary.image('input', image_shaped_input, 64)  # todo 64有问题
+        tf.summary.image('input', image_shaped_input)
     with tf.name_scope('conv'):
         # First layer
         with tf.name_scope('layer1'):
