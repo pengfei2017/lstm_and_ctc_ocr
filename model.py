@@ -102,14 +102,23 @@ def convolutional_layers():
     return inputs, features
 
 
-def lstm_cell():
-    return tf.contrib.rnn.LSTMCell(common.num_hidden)
+def lstm_cell(is_training=True):
+    lstm_cell = tf.contrib.rnn.LSTMCell(common.num_hidden)
+    # 在外面包裹一层dropout
+    if is_training and common.KEEP_PROB < 1:
+        lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
+            lstm_cell, output_keep_prob=common.KEEP_PROB)
+    return lstm_cell
 
 
-def get_train_model():
+def get_train_model(is_training=True):
     # Has size [batch_size, max_stepsize, num_features], but the
     # batch_size and max_stepsize can vary along each step
     inputs, features = convolutional_layers()
+
+    if is_training and common.KEEP_PROB < 1:
+        # 在外面包裹一层dropout
+        features = tf.nn.dropout(features, common.KEEP_PROB)
     # print features.get_shape()
 
     # inputs = tf.placeholder(tf.float32, [None, None, common.OUTPUT_SHAPE[0]])
@@ -128,7 +137,7 @@ def get_train_model():
     # cell = tf.contrib.rnn.LSTMCell(common.num_hidden, state_is_tuple=True)
 
     # Stacking rnn cells
-    stack = tf.contrib.rnn.MultiRNNCell([lstm_cell() for _ in range(0, common.num_layers)],
+    stack = tf.contrib.rnn.MultiRNNCell([lstm_cell(is_training) for _ in range(0, common.num_layers)],
                                         state_is_tuple=True)
 
     # The second output is the last state and we will no use that

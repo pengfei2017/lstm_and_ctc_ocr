@@ -18,7 +18,7 @@ __author__ = "andy"
 
 # detect
 def detect(test_inputs, test_targets, test_seq_len):
-    logits, inputs, targets, seq_len, W, b = model.get_train_model()
+    logits, inputs, targets, seq_len, W, b = model.get_train_model(False)
 
     decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
 

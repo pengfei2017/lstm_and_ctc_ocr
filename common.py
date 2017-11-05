@@ -41,6 +41,8 @@ SPACE_TOKEN = '<space>'
 
 __all__ = (
     'DIGITS',
+    'LETTERS',
+    'CHINESES',
     'sigmoid',
     'softmax',
     'CHARS'
@@ -58,7 +60,7 @@ TEST_SIZE = 100  # 测试用的数据集的大小（即整个测试数据集的�
 ADD_BLANK = True  # if add a blank between digits
 LEARNING_RATE_DECAY_FACTOR = 0.9  # The learning rate decay factor
 INITIAL_LEARNING_RATE = 1e-3
-DECAY_STEPS = 5000
+DECAY_STEPS = 5000  # 5000个批处理的时候开始衰减
 
 # parameters for bdlstm ctc
 BATCH_SIZE = 64
@@ -70,6 +72,8 @@ TRAIN_SIZE = BATCH_SIZE * BATCHES  # 训练一个Epoch的样本数（即整个�
 
 MOMENTUM = 0.9
 REPORT_STEPS = 1000
+
+KEEP_PROB = 0.5
 
 # Hyper-parameters
 num_epochs = 2000
