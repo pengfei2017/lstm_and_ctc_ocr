@@ -67,7 +67,7 @@ def train():
     with tf.name_scope('loss'):
         loss = tf.nn.ctc_loss(targets, logits, seq_len)
         cost = tf.reduce_mean(loss)  # 计算识别的损失率，即误差
-        tf.summary.scalar('loss/loss', cost)  # 可视化损失率变化
+        tf.summary.scalar('loss', cost)  # 可视化损失率变化
     with tf.name_scope('train'):
         optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
                                                momentum=common.MOMENTUM).minimize(cost, global_step=global_step)
@@ -75,7 +75,7 @@ def train():
         # Option 2: tf.contrib.ctc.ctc_beam_search_decoder
         # (it's slower but you'll get better results)
         decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
-
+    with tf.name_scope('accuracy'):
         # Accuracy: label error rate
         acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), targets))  # 计算识别的准确率，即精度
         tf.summary.scalar('accuracy', acc)  # 可视化准确率变化
