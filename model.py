@@ -210,7 +210,7 @@ def get_train_model(is_training=True):
 
             # Here we use sparse_placeholder that will generate a
             # SparseTensor required by ctc_loss op.
-    with tf.name_scope('LSTM'):  # LSTM中共两次
+    with tf.name_scope('LSTM'):  # LSTM中3两次 两个隐藏层和一个全链接层
         targets = tf.sparse_placeholder(tf.int32)
 
         # 1d array of size [batch_size]
@@ -244,16 +244,16 @@ def get_train_model(is_training=True):
                 W = tf.Variable(tf.truncated_normal([common.num_hidden,
                                                      common.num_classes],
                                                     stddev=0.1), name="weights")
-                variable_summaries('fc_layer_LSTM/weights', W)
+                variable_summaries('LSTM/fc_layer/weights', W)
             with tf.name_scope('biases'):
                 # Zero initialization
                 # Tip: Is tf.zeros_initializer the same?
                 b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="biases")
-                variable_summaries('fc_layer_LSTM/biases', b)
+                variable_summaries('LSTM/fc_layer/biases', b)
 
             # Doing the affine projection(做仿射投影) 这个就是lstm_ctc要的最终结果[time_step,num_class]=[64*256,12]
             logits = tf.matmul(outputs, W) + b
-        with tf.name_scope('batch_normalization_LSTM_fc_layer'):
+        with tf.name_scope('batch_normalization'):
             # Batch Normalization（批标准化）
             axes = list(range(len(logits.get_shape()) - 1))
             lstm_fc_mean, lstm_fc_var = tf.nn.moments(
@@ -284,10 +284,10 @@ def get_train_model(is_training=True):
 
             # 将修改后的 mean / var 放入下面的公式
             logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-            tf.summary.scalar('lstm_fc_mean（均值）', lstm_fc_mean)
-            tf.summary.scalar('lstm_fc_var（方差）', lstm_fc_var)
-            tf.summary.histogram('lstm_fc_layer_W_b', logits)
-            tf.summary.tensor_summary('tensor_lstm_fc_layer_W_b', logits)
+            tf.summary.scalar('LSTM/batch_normalization/lstm_fc_mean（均值）', lstm_fc_mean)
+            tf.summary.scalar('LSTM/batch_normalization/lstm_fc_var（方差）', lstm_fc_var)
+            tf.summary.histogram('LSTM/batch_normalization/lstm_fc_layer_W_b', logits)
+            tf.summary.tensor_summary('LSTM/batch_normalization/tensor_lstm_fc_layer_W_b', logits)
     # Reshaping back to the original shape
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
 
