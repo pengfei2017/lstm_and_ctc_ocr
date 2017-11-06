@@ -101,7 +101,7 @@ def train():
             writer.add_summary(result, steps)  # result是summary类型的，需要放入writer中，i步数（x轴）
         if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每训练1000批数据（即迭代1000次，即训练10次整个数据集）存一次模型
             do_report()  # 每训练10次整个数据集用测试图片数据计算一次识别出字符个数的准确率
-            save_path = saver.save(session, "models/ocr.model", global_step=steps)
+            save_path = saver.save(session, "models_bak1/ocr.model", global_step=steps)
             # print(save_path)
         return b_cost, steps  # 返回当前批次的损失率batch_cost和当前批次的编号
 
