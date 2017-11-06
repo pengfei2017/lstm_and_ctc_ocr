@@ -183,12 +183,14 @@ def convolutional_layers(is_training=True):
 
 
 def lstm_cell(i, is_training=True):
-    with tf.name_scope('layer%d' % i):
+    layer_name = 'layer%d' % i
+    with tf.name_scope(layer_name):
         lstm_cell = tf.contrib.rnn.LSTMCell(common.num_hidden)
     # 在外面包裹一层dropout
-    with tf.name_scope('dropout%d' % i):
+    dropout_layer_name = 'dropout%d' % i
+    with tf.name_scope(dropout_layer_name):
         if is_training and common.KEEP_PROB < 1:
-            tf.summary.scalar('LSTM/dropout%d/dropout_keep_probability' % i, common.KEEP_PROB)
+            tf.summary.scalar('LSTM/' + dropout_layer_name + '/dropout_keep_probability', common.KEEP_PROB)
             lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
                 lstm_cell, output_keep_prob=common.KEEP_PROB)
     return lstm_cell
