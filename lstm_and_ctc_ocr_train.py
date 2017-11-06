@@ -142,7 +142,7 @@ def train():
                         train_cost /= common.TRAIN_SIZE  # 计算当前Epoch（即整个数据集的样本数，也即6400个样本，再即6400张图）的每个样本（也即每张图）的损失率
                         # train_ler /= common.TRAIN_SIZE
                         val_feed = {inputs: train_inputs, targets: train_targets,
-                                    seq_len: train_seq_len}  # 用当前Epoch的最后一批样本数据来取
+                                    seq_len: train_seq_len}  # 用当前Epoch的最后一批样本数据来取   #模型中inputs、targets和seq_len都是占位符，所以在这里给这三个占位符赋值
 
                         # 总共对整个数据集训练10000遍，每遍训练100批，每批训练64个样本，每个样本是一张图片
                         # val_cost指计算cost操作的返回值，是当前的误差率；
