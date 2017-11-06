@@ -85,8 +85,7 @@ def convolutional_layers(is_training=True):
                                 lambda: (  # 如果是 False, 返回之前 input_mean/input_var 的Moving Average
                                     ema.average(input_mean),
                                     ema.average(input_var)
-                                )
-                                )
+                                ))
 
             # 将修改后的 mean / var 放入下面的公式
             x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
@@ -170,8 +169,7 @@ def convolutional_layers(is_training=True):
                                     lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
                                         ema.average(fc_mean),
                                         ema.average(fc_var)
-                                    )
-                                    )
+                                    ))
 
                 # 将修改后的 mean / var 放入下面的公式
                 fc_layer_W_b = tf.nn.batch_normalization(fc_layer_W_b, fc_mean, fc_var, shift, scale, epsilon)
@@ -279,8 +277,7 @@ def get_train_model(is_training=True):
                                     lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
                                         ema.average(lstm_fc_mean),
                                         ema.average(lstm_fc_var)
-                                    )
-                                    )
+                                    ))
 
                 # 将修改后的 mean / var 放入下面的公式
                 logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
