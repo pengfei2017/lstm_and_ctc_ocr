@@ -44,6 +44,18 @@ def convolutional_layers():
     with tf.name_scope('input_reshape'):
         image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
         tf.summary.image('input', image_shaped_input, common.BATCH_SIZE)  # 一次显示BATCH_SIZE个图像，即输入样本的个数
+    with tf.name_scope(''):
+        # Batch Normalization（批标准化）
+        axes = list(range(len(x_expanded.get_shape()) - 1))
+        fc_mean, fc_var = tf.nn.moments(
+            x_expanded,
+            axes=axes
+            # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
+        )
+        scale = tf.Variable(tf.ones(fc_mean.get_shape()))
+        shift = tf.Variable(tf.zeros(fc_mean.get_shape()))
+        epsilon = 0.001
+        x_expanded = tf.nn.batch_normalization(x_expanded, fc_mean, fc_var, shift, scale, epsilon)
     with tf.name_scope('conv'):
         # First layer
         with tf.name_scope('layer1'):
