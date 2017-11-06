@@ -80,7 +80,7 @@ def convolutional_layers(is_training=True):
 
             # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
             # 修改后:
-            mean, var = tf.cond(is_training,  # is_training 的值是 True/False
+            mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
                                 mean_var_with_update,  # 如果是 True, 更新 mean/var
                                 lambda: (  # 如果是 False, 返回之前 input_mean/input_var 的Moving Average
                                     ema.average(input_mean),
@@ -164,7 +164,7 @@ def convolutional_layers(is_training=True):
 
                 # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
                 # 修改后:
-                mean, var = tf.cond(is_training,  # is_training 的值是 True/False
+                mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
                                     mean_var_with_update,  # 如果是 True, 更新 mean/var
                                     lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
                                         ema.average(fc_mean),
@@ -274,7 +274,7 @@ def get_train_model(is_training=True):
 
                 # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
                 # 修改后:
-                mean, var = tf.cond(is_training,  # is_training 的值是 True/False
+                mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
                                     mean_var_with_update,  # 如果是 True, 更新 mean/var
                                     lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
                                         ema.average(lstm_fc_mean),
