@@ -177,13 +177,11 @@ def convolutional_layers(is_training=True):
     return inputs, features
 
 
-def lstm_cell(i, is_training=True):
-    layer_name = 'layer%d' % i
-    with tf.name_scope(layer_name):
+def lstm_cell(is_training=True):
+    with tf.name_scope('layer'):
         lstm_cell = tf.contrib.rnn.LSTMCell(common.num_hidden)
     # 在外面包裹一层dropout
-    dropout_layer_name = 'dropout%d' % i
-    with tf.name_scope(dropout_layer_name):
+    with tf.name_scope('dropout'):
         if is_training and common.KEEP_PROB < 1:
             tf.summary.scalar('dropout_keep_probability', common.KEEP_PROB)
             lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
@@ -220,7 +218,7 @@ def get_train_model(is_training=True):
         # cell = tf.contrib.rnn.LSTMCell(common.num_hidden, state_is_tuple=True)
 
         # Stacking rnn cells
-        stack = tf.contrib.rnn.MultiRNNCell([lstm_cell(i, is_training) for i in range(0, common.num_layers)],
+        stack = tf.contrib.rnn.MultiRNNCell([lstm_cell(is_training) for _ in range(0, common.num_layers)],
                                             state_is_tuple=True)
 
         # The second output is the last state and we will no use that
