@@ -39,6 +39,7 @@ def convolutional_layers(is_training=True):
     """
     with tf.name_scope('inputs'):
         inputs = tf.placeholder(tf.float32, [None, None, common.OUTPUT_SHAPE[0]], name='inputs')
+        tf.summary.histogram('inputs', inputs)
     with tf.name_scope('input_expand_dims'):
         x_expanded = tf.expand_dims(inputs, 3)
     with tf.name_scope('input_reshape'):
