@@ -25,7 +25,8 @@ def detect(test_inputs, test_targets, test_seq_len):
     saver = tf.train.Saver()
     with tf.Session() as sess:
         # Restore variables from disk.
-        saver.restore(sess, "models/ocr.model-0.95-94999")
+        # saver.restore(sess, "models/ocr.model-0.95-94999")
+        saver.restore(sess, "models/ocr.model-3000.data-00000-of-00001")
         print("Model restored.")
         # feed_dict = {inputs: test_inputs, targets: test_targets, seq_len: test_seq_len}
         feed_dict = {inputs: test_inputs, seq_len: test_seq_len}
@@ -58,7 +59,8 @@ def detect(test_inputs, test_targets, test_seq_len):
 
 
 if __name__ == '__main__':
-    test_inputs, test_targets, test_seq_len = utils.get_data_set('small_test')
+    # test_inputs, test_targets, test_seq_len = utils.get_data_set('small_test')
+    test_inputs, test_targets, test_seq_len = utils.get_data_set('test')
     print(test_inputs[0].shape)
     print(detect(test_inputs, test_targets, test_seq_len))
     # print_tensors_in_checkpoint_file("model/ocr.model.50", None)
