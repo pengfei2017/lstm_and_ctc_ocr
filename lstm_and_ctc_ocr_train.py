@@ -110,7 +110,7 @@ def train():
     with tf.get_default_graph()._kernel_label_map({"CTCLoss": "WarpCTC"}):
         with tf.Session(config=config) as session:
             merged = tf.summary.merge_all()
-            writer = tf.summary.FileWriter("logs/", session.graph)
+            writer = tf.summary.FileWriter("logs/model2/", session.graph)
             session.run(init)
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
             for curr_epoch in range(common.num_epochs):  # 对完整数据集（6400张图，即6400个样本）训练10000次
