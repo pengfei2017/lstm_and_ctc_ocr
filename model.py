@@ -35,15 +35,14 @@ def avg_pool(x, ksize=(2, 2), stride=(2, 2)):
 
 def variable_summaries(name, var):
     """Attach a lot of summaries to a Tensor."""
-    with tf.name_scope('summaries'):
-        mean = tf.reduce_mean(var)
-        tf.summary.scalar('mean/' + name, mean)
-        with tf.name_scope('stddev'):
-            stddev = tf.sqrt(tf.reduce_sum(tf.square(var - mean)))
-        tf.summary.scalar('sttdev/' + name, stddev)
-        tf.summary.scalar('max/' + name, tf.reduce_max(var))
-        tf.summary.scalar('min/' + name, tf.reduce_min(var))
-        tf.summary.histogram(name, var)
+    mean = tf.reduce_mean(var)
+    tf.summary.scalar(name + '/mean' + name, mean)
+    with tf.name_scope('stddev'):
+        stddev = tf.sqrt(tf.reduce_sum(tf.square(var - mean)))
+    tf.summary.scalar(name + '/sttdev', stddev)
+    tf.summary.scalar(name + '/max', tf.reduce_max(var))
+    tf.summary.scalar(name + '/min', tf.reduce_min(var))
+    tf.summary.histogram(name, var)
 
 
 def convolutional_layers(is_training=True):
@@ -52,12 +51,12 @@ def convolutional_layers(is_training=True):
     """
     with tf.name_scope('inputs'):
         inputs = tf.placeholder(tf.float32, [None, None, common.OUTPUT_SHAPE[0]], name='inputs')
-        tf.summary.histogram('inputs/inputs', inputs)  # 原始数据
+        tf.summary.histogram('inputs', inputs)  # 原始数据
         with tf.name_scope('input_expand_dims'):
             x_expanded = tf.expand_dims(inputs, 3)
         with tf.name_scope('input_reshape'):
             image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
-            tf.summary.image('inputs/input_reshape/images', image_shaped_input,
+            tf.summary.image('images', image_shaped_input,
                              common.BATCH_SIZE)  # 一次显示BATCH_SIZE个图像，即输入样本的个数
         with tf.name_scope('batch_normalization'):  # 对input进行批标准化
             # Batch Normalization（批标准化）
@@ -89,29 +88,29 @@ def convolutional_layers(is_training=True):
 
             # 将修改后的 mean / var 放入下面的公式
             x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
-            # tf.summary.scalar('inputs/batch_normalization/input_mean', input_mean)
-            # tf.summary.scalar('inputs/batch_normalization/input_var', input_var)
-            tf.summary.histogram('inputs/batch_normalization/input', x_expanded)
+            tf.summary.scalar('input_mean', input_mean)
+            tf.summary.scalar('input_var', input_var)
+            tf.summary.histogram('input', x_expanded)
     with tf.name_scope('CNN'):  # CNN中共四层，三次卷积层，一层全链接层
         # First layer
         with tf.name_scope('layer1'):
             with tf.name_scope('weights'):
-                W_conv1 = weight_variable([5, 5, 1, 48], name='weights')
-                variable_summaries('weights', W_conv1)
+                W_conv1 = weight_variable([5, 5, 1, 48], name='W')
+                variable_summaries('W', W_conv1)
             with tf.name_scope('biases'):
-                b_conv1 = bias_variable([48], name='biases')
-                variable_summaries('biases', b_conv1)
+                b_conv1 = bias_variable([48], name='b')
+                variable_summaries('b', b_conv1)
             h_conv1 = tf.nn.relu(conv2d(x_expanded, W_conv1) + b_conv1)
             h_pool1 = max_pool(h_conv1, ksize=(2, 2), stride=(2, 2))
 
         # Second layer
         with tf.name_scope('layer2'):
             with tf.name_scope('weights'):
-                W_conv2 = weight_variable([5, 5, 48, 64], name='weights')
-                variable_summaries('weights', W_conv2)
+                W_conv2 = weight_variable([5, 5, 48, 64], name='W')
+                variable_summaries('W', W_conv2)
             with tf.name_scope('biases'):
-                b_conv2 = bias_variable([64], name='biases')
-                variable_summaries('biases', b_conv2)
+                b_conv2 = bias_variable([64], name='b')
+                variable_summaries('b', b_conv2)
 
             h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
             h_pool2 = max_pool(h_conv2, ksize=(2, 1), stride=(2, 1))
@@ -119,11 +118,11 @@ def convolutional_layers(is_training=True):
         # Third layer
         with tf.name_scope('layer3'):
             with tf.name_scope('weights'):
-                W_conv3 = weight_variable([5, 5, 64, 128], name='weights')
-                variable_summaries('weights', W_conv3)
+                W_conv3 = weight_variable([5, 5, 64, 128], name='W')
+                variable_summaries('W', W_conv3)
             with tf.name_scope('biases'):
-                b_conv3 = bias_variable([128], name='biases')
-                variable_summaries('biases', b_conv3)
+                b_conv3 = bias_variable([128], name='b')
+                variable_summaries('b', b_conv3)
             h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
             h_pool3 = max_pool(h_conv3, ksize=(2, 2), stride=(2, 2))
 
@@ -132,11 +131,11 @@ def convolutional_layers(is_training=True):
         # Densely connected layer
         with tf.name_scope('fc_layer'):
             with tf.name_scope('weights'):
-                W_fc1 = weight_variable([32 * 8 * common.OUTPUT_SHAPE[1], common.OUTPUT_SHAPE[1]], name='weights')
-                variable_summaries('weights', W_fc1)
+                W_fc1 = weight_variable([32 * 8 * common.OUTPUT_SHAPE[1], common.OUTPUT_SHAPE[1]], name='W')
+                variable_summaries('W', W_fc1)
             with tf.name_scope('biases'):
-                b_fc1 = bias_variable([common.OUTPUT_SHAPE[1]], name='biases')
-                variable_summaries('biases', b_fc1)
+                b_fc1 = bias_variable([common.OUTPUT_SHAPE[1]], name='b')
+                variable_summaries('b', b_fc1)
 
             fc_layer_W_b = tf.matmul(conv_layer_flat, W_fc1) + b_fc1
             with tf.name_scope('batch_normalization'):  # 对fc_layer的乘积先进行批标准化再进行激活函数
@@ -169,8 +168,8 @@ def convolutional_layers(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 fc_layer_W_b = tf.nn.batch_normalization(fc_layer_W_b, fc_mean, fc_var, shift, scale, epsilon)
-                # tf.summary.scalar(layer_name + 'batch_normalization/fc_mean', fc_mean)
-                # tf.summary.scalar(layer_name + 'batch_normalization/fc_var', fc_var)
+                tf.summary.scalar('fc_mean', fc_mean)
+                tf.summary.scalar('fc_var', fc_var)
                 tf.summary.histogram('fc_layer_W_b', fc_layer_W_b)
             features = tf.nn.relu(fc_layer_W_b)
     shape = tf.shape(features)
@@ -186,7 +185,7 @@ def lstm_cell(i, is_training=True):
     dropout_layer_name = 'dropout%d' % i
     with tf.name_scope(dropout_layer_name):
         if is_training and common.KEEP_PROB < 1:
-            tf.summary.scalar('LSTM/' + dropout_layer_name + '/dropout_keep_probability', common.KEEP_PROB)
+            tf.summary.scalar('dropout_keep_probability', common.KEEP_PROB)
             lstm_cell = tf.nn.rnn_cell.DropoutWrapper(
                 lstm_cell, output_keep_prob=common.KEEP_PROB)
     return lstm_cell
@@ -200,7 +199,7 @@ def get_train_model(is_training=True):
     with tf.name_scope('dropout'):
         if is_training and common.KEEP_PROB < 1:
             # 在外面包裹一层dropout
-            tf.summary.scalar('dropout/dropout_keep_probability', common.KEEP_PROB)
+            tf.summary.scalar('dropout_keep_probability', common.KEEP_PROB)
             features = tf.nn.dropout(features, common.KEEP_PROB)
             # print features.get_shape()
 
@@ -241,13 +240,13 @@ def get_train_model(is_training=True):
             with tf.name_scope('weights'):
                 W = tf.Variable(tf.truncated_normal([common.num_hidden,
                                                      common.num_classes],
-                                                    stddev=0.1), name="weights")
-                variable_summaries('LSTM/fc_layer/weights', W)
+                                                    stddev=0.1), name="W")
+                variable_summaries('W', W)
             with tf.name_scope('biases'):
                 # Zero initialization
                 # Tip: Is tf.zeros_initializer the same?
-                b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="biases")
-                variable_summaries('LSTM/fc_layer/biases', b)
+                b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="b")
+                variable_summaries('b', b)
 
             # Doing the affine projection(做仿射投影) 这个就是lstm_ctc要的最终结果[time_step,num_class]=[64*256,12]
             logits = tf.matmul(outputs, W) + b
@@ -281,9 +280,9 @@ def get_train_model(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-                # tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_mean', lstm_fc_mean)
-                # tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_var', lstm_fc_var)
-                tf.summary.histogram('LSTM/fc_layer/batch_normalization/lstm_fc_layer_W_b', logits)
+                tf.summary.scalar('fc_mean', lstm_fc_mean)
+                tf.summary.scalar('fc_var', lstm_fc_var)
+                tf.summary.histogram('fc_layer_W_b', logits)
     # Reshaping back to the original shape
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
 
