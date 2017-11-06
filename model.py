@@ -202,79 +202,80 @@ def get_train_model(is_training=True):
 
             # Here we use sparse_placeholder that will generate a
             # SparseTensor required by ctc_loss op.
-    targets = tf.sparse_placeholder(tf.int32)
+    with tf.name_scope('LSTM'):
+        targets = tf.sparse_placeholder(tf.int32)
 
-    # 1d array of size [batch_size]
-    seq_len = tf.placeholder(tf.int32, [None])
+        # 1d array of size [batch_size]
+        seq_len = tf.placeholder(tf.int32, [None])
 
-    # Defining the cell
-    # Can be:
-    #   tf.nn.rnn_cell.RNNCell
-    #   tf.nn.rnn_cell.GRUCell
-    # cell = tf.contrib.rnn.LSTMCell(common.num_hidden, state_is_tuple=True)
+        # Defining the cell
+        # Can be:
+        #   tf.nn.rnn_cell.RNNCell
+        #   tf.nn.rnn_cell.GRUCell
+        # cell = tf.contrib.rnn.LSTMCell(common.num_hidden, state_is_tuple=True)
 
-    # Stacking rnn cells
-    stack = tf.contrib.rnn.MultiRNNCell([lstm_cell(is_training) for _ in range(0, common.num_layers)],
-                                        state_is_tuple=True)
+        # Stacking rnn cells
+        stack = tf.contrib.rnn.MultiRNNCell([lstm_cell(is_training) for _ in range(0, common.num_layers)],
+                                            state_is_tuple=True)
 
-    # The second output is the last state and we will no use that
-    outputs, _ = tf.nn.dynamic_rnn(stack, features, seq_len, dtype=tf.float32)
+        # The second output is the last state and we will no use that
+        outputs, _ = tf.nn.dynamic_rnn(stack, features, seq_len, dtype=tf.float32)
 
-    with tf.name_scope('fc_layer'):
-        shape = tf.shape(features)
-        batch_s, max_timesteps = shape[0], shape[1]
+        with tf.name_scope('fc_layer'):
+            shape = tf.shape(features)
+            batch_s, max_timesteps = shape[0], shape[1]
 
-        # Reshaping to apply the same weights over the timesteps
-        outputs = tf.reshape(outputs, [-1, common.num_hidden])
+            # Reshaping to apply the same weights over the timesteps
+            outputs = tf.reshape(outputs, [-1, common.num_hidden])
 
-        # Truncated normal with mean 0 and stdev=0.1
-        # Tip: Try another initialization
-        # see https://www.tensorflow.org/versions/r0.9/api_docs/python/contrib.layers.html#initializers
+            # Truncated normal with mean 0 and stdev=0.1
+            # Tip: Try another initialization
+            # see https://www.tensorflow.org/versions/r0.9/api_docs/python/contrib.layers.html#initializers
 
-        with tf.name_scope('weights'):
-            W = tf.Variable(tf.truncated_normal([common.num_hidden, common.num_classes], stddev=0.1), name="W")
-            variable_summaries('W', W)
-        with tf.name_scope('biases'):
-            # Zero initialization
-            # Tip: Is tf.zeros_initializer the same?
-            b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="b")
-            variable_summaries('b', b)
+            with tf.name_scope('weights'):
+                W = tf.Variable(tf.truncated_normal([common.num_hidden, common.num_classes], stddev=0.1), name="W")
+                variable_summaries('W', W)
+            with tf.name_scope('biases'):
+                # Zero initialization
+                # Tip: Is tf.zeros_initializer the same?
+                b = tf.Variable(tf.constant(0., shape=[common.num_classes]), name="b")
+                variable_summaries('b', b)
 
-        # Doing the affine projection(做仿射投影) 这个就是lstm_ctc要的最终结果[time_step,num_class]=[64*256,12]
-        logits = tf.matmul(outputs, W) + b
-        with tf.name_scope('batch_normalization'):  # 对fc_layer的乘积先批标准化，再进行激活函数处理
-            # Batch Normalization（批标准化）
-            axes = list(range(len(logits.get_shape()) - 1))
-            lstm_fc_mean, lstm_fc_var = tf.nn.moments(
-                logits,
-                axes=axes
-                # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
-            )
-            scale = tf.Variable(tf.ones(lstm_fc_mean.get_shape()))
-            shift = tf.Variable(tf.zeros(lstm_fc_mean.get_shape()))
-            epsilon = 0.001
+            # Doing the affine projection(做仿射投影) 这个就是lstm_ctc要的最终结果[time_step,num_class]=[64*256,12]
+            logits = tf.matmul(outputs, W) + b
+            with tf.name_scope('batch_normalization'):  # 对fc_layer的乘积先批标准化，再进行激活函数处理
+                # Batch Normalization（批标准化）
+                axes = list(range(len(logits.get_shape()) - 1))
+                lstm_fc_mean, lstm_fc_var = tf.nn.moments(
+                    logits,
+                    axes=axes
+                    # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
+                )
+                scale = tf.Variable(tf.ones(lstm_fc_mean.get_shape()))
+                shift = tf.Variable(tf.zeros(lstm_fc_mean.get_shape()))
+                epsilon = 0.001
 
-            ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
+                ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
 
-            def mean_var_with_update():
-                ema_apply_op = ema.apply([lstm_fc_mean, lstm_fc_var])
-                with tf.control_dependencies([ema_apply_op]):
-                    return tf.identity(lstm_fc_mean), tf.identity(lstm_fc_var)
+                def mean_var_with_update():
+                    ema_apply_op = ema.apply([lstm_fc_mean, lstm_fc_var])
+                    with tf.control_dependencies([ema_apply_op]):
+                        return tf.identity(lstm_fc_mean), tf.identity(lstm_fc_var)
 
-            # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
-            # 修改后:
-            mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
-                                mean_var_with_update,  # 如果是 True, 更新 mean/var
-                                lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
-                                    ema.average(lstm_fc_mean),
-                                    ema.average(lstm_fc_var)
-                                ))
+                # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
+                # 修改后:
+                mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
+                                    mean_var_with_update,  # 如果是 True, 更新 mean/var
+                                    lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
+                                        ema.average(lstm_fc_mean),
+                                        ema.average(lstm_fc_var)
+                                    ))
 
-            # 将修改后的 mean / var 放入下面的公式
-            logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-            tf.summary.histogram('fc_mean', lstm_fc_mean)
-            tf.summary.histogram('fc_var', lstm_fc_var)
-            tf.summary.histogram('fc_layer_W_b', logits)
+                # 将修改后的 mean / var 放入下面的公式
+                logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
+                tf.summary.histogram('fc_mean', lstm_fc_mean)
+                tf.summary.histogram('fc_var', lstm_fc_var)
+                tf.summary.histogram('fc_layer_W_b', logits)
     # Reshaping back to the original shape
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
 
