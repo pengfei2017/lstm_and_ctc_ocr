@@ -133,6 +133,7 @@ def train():
                             get_data_time = time.time() - get_data_start  # 当前批次获取数据花费的时间
                             start = time.time()  # 当前批次训练开始的时间
                             c, steps = do_batch()  # 每训练一批（或者叫每迭代一次，也可叫每训练64张图）会更新一下神经网络模型各层的weights和biases
+                            tf.summary.scalar('cost', c)
                             train_cost += c * common.BATCH_SIZE  # 累加每批中所有样本的损失率（也即当前批次64张图乘以当批的平均损失率c）计算当前Epoch（一次整个数据的训练）总的损失率
                             seconds = time.time() - start  # 当前批次训练花费的时间
                             print("Step（在10000个Epoch中的批次编号）:", steps, ", batch seconds（当前批次训练花费的时间）:", seconds,
