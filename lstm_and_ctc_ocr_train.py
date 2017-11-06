@@ -128,7 +128,6 @@ def train():
                                                                                     batch * common.BATCH_SIZE,
                                                                                     (
                                                                                         batch + 1) * common.BATCH_SIZE)  # 每批取出64个样本即64张图进行训练
-                    # todo tf.summary.image('input', image_shaped_input, 10)
                     get_data_time = time.time() - get_data_start  # 当前批次获取数据花费的时间
                     start = time.time()  # 当前批次训练开始的时间
                     c, steps = do_batch()  # 每训练一批（或者叫每迭代一次，也可叫每训练64张图）会更新一下神经网络模型各层的weights和biases
@@ -156,7 +155,7 @@ def train():
                 print(log.format(curr_epoch + 1, common.num_epochs, steps, train_cost, train_ler, val_cost,
                                  val_ler,
                                  time.time() - curr_epoch_start, lr))
-                
+
             writer.close()  # 10000个Epoch训练完时关闭summary的FileWriter
 
 
