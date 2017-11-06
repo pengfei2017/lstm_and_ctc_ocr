@@ -43,7 +43,7 @@ def convolutional_layers():
         x_expanded = tf.expand_dims(inputs, 3)
     with tf.name_scope('input_reshape'):
         image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
-        tf.summary.image('input', image_shaped_input)
+        tf.summary.image('input', image_shaped_input, common.BATCH_SIZE)  # 一次显示BATCH_SIZE个图像，即输入样本的个数
     with tf.name_scope('conv'):
         # First layer
         with tf.name_scope('layer1'):
