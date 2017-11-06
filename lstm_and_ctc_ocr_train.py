@@ -55,17 +55,19 @@ def report_accuracy(decoded_list, test_targets):
 
 
 def train():
-    global_step = tf.Variable(0, trainable=False)  # 代表总共训练了多少批，每批训练64个样本（即64张图），每训练一批就是一个迭代，故也可表示位总共迭代了多少次了
-    learning_rate = tf.train.exponential_decay(common.INITIAL_LEARNING_RATE,
-                                               global_step,
-                                               common.DECAY_STEPS,
-                                               common.LEARNING_RATE_DECAY_FACTOR,
-                                               staircase=True)  # 计算训练的学习率
+    with tf.name_scope('init'):
+        global_step = tf.Variable(0, trainable=False)  # 代表总共训练了多少批，每批训练64个样本（即64张图），每训练一批就是一个迭代，故也可表示位总共迭代了多少次了
+        learning_rate = tf.train.exponential_decay(common.INITIAL_LEARNING_RATE,
+                                                   global_step,
+                                                   common.DECAY_STEPS,
+                                                   common.LEARNING_RATE_DECAY_FACTOR,
+                                                   staircase=True)  # 计算训练的学习率
+    # 获取神经网络模型
     logits, inputs, targets, seq_len, W, b = model.get_train_model()  # 这时候还只是定义模型的计算图，只有各个变量的形状，还没有任何计算，所有没有值呢还
     with tf.name_scope('loss'):
         loss = tf.nn.ctc_loss(targets, logits, seq_len)
         cost = tf.reduce_mean(loss)  # 计算识别的损失率，即误差
-        tf.summary.scalar('loss', cost)  # 可视化损失率变化
+        tf.summary.scalar('loss/loss', cost)  # 可视化损失率变化
     with tf.name_scope('train'):
         optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
                                                momentum=common.MOMENTUM).minimize(cost, global_step=global_step)
