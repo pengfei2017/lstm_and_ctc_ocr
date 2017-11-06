@@ -76,7 +76,8 @@ def sparse_tuple_from(sequences, dtype=np.int32):
 # load the training or test dataset from disk
 def get_data_set(dirname, start_index=None, end_index=None):
     # start = time.time()
-    data_for_lstm_ctc = list(common.read_data_for_lstm_ctc(dirname, start_index, end_index))
+    data_for_lstm_ctc = list(common.read_data_for_lstm_ctc(dirname, start_index,
+                                                           end_index))  # 注意：在common.read_data_for_lstm_ctc函数中调用的load_data_set函数中已经将所有的0到255之间的像素指转化为小数了
     inputs, codes = common.unzip(data_for_lstm_ctc)
     # print("unzip time",time.time() - start )
     inputs = inputs.swapaxes(1, 2)  # 交换矩阵第一纬度和第二纬度的位置
@@ -128,4 +129,4 @@ def decode_sparse_tensor(sparse_tensor):
 
 if __name__ == '__main__':
     test_inputs, test_targets, test_seq_len = get_data_set('test')
-    print(test_inputs.shape)
+    print(test_inputs)
