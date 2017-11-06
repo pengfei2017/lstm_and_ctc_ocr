@@ -280,7 +280,7 @@ def get_train_model(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-                tf.summary.histogram('fc_mean', tf.aslstm_fc_mean)
+                tf.summary.histogram('fc_mean', lstm_fc_mean)
                 tf.summary.histogram('fc_var', lstm_fc_var)
                 tf.summary.histogram('fc_layer_W_b', logits)
     # Reshaping back to the original shape
