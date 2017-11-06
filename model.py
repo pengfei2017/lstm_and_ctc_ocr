@@ -36,7 +36,7 @@ def avg_pool(x, ksize=(2, 2), stride=(2, 2)):
 def variable_summaries(name, var):
     """Attach a lot of summaries to a Tensor."""
     mean = tf.reduce_mean(var)
-    tf.summary.scalar(name + '/mean' + name, mean)
+    tf.summary.scalar(name + '/mean', mean)
     with tf.name_scope('stddev'):
         stddev = tf.sqrt(tf.reduce_sum(tf.square(var - mean)))
     tf.summary.scalar(name + '/sttdev', stddev)
@@ -88,8 +88,8 @@ def convolutional_layers(is_training=True):
 
             # 将修改后的 mean / var 放入下面的公式
             x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
-            tf.summary.scalar('input_mean', input_mean)
-            tf.summary.scalar('input_var', input_var)
+            tf.summary.histogram('input_mean', input_mean)
+            tf.summary.histogram('input_var', input_var)
             tf.summary.histogram('input', x_expanded)
     with tf.name_scope('CNN'):  # CNN中共四层，三次卷积层，一层全链接层
         # First layer
@@ -168,8 +168,8 @@ def convolutional_layers(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 fc_layer_W_b = tf.nn.batch_normalization(fc_layer_W_b, fc_mean, fc_var, shift, scale, epsilon)
-                tf.summary.scalar('fc_mean', fc_mean)
-                tf.summary.scalar('fc_var', fc_var)
+                tf.summary.histogram('fc_mean', fc_mean)
+                tf.summary.histogram('fc_var', fc_var)
                 tf.summary.histogram('fc_layer_W_b', fc_layer_W_b)
             features = tf.nn.relu(fc_layer_W_b)
     shape = tf.shape(features)
@@ -280,8 +280,8 @@ def get_train_model(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-                tf.summary.scalar('fc_mean', lstm_fc_mean)
-                tf.summary.scalar('fc_var', lstm_fc_var)
+                tf.summary.histogram('fc_mean', tf.aslstm_fc_mean)
+                tf.summary.histogram('fc_var', lstm_fc_var)
                 tf.summary.histogram('fc_layer_W_b', logits)
     # Reshaping back to the original shape
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
