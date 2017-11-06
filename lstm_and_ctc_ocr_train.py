@@ -96,7 +96,7 @@ def train():
         # 每批训练64张图组成的序列
         feed = {inputs: train_inputs, targets: train_targets, seq_len: train_seq_len}
         b_cost, steps, _ = session.run([cost, global_step, optimizer], feed)
-        if steps % 50 == 0:
+        if steps % 1 == 0:  # todo 原值50
             result = session.run(merged, feed_dict=feed)  # merged也是需要run的
             writer.add_summary(result, steps)  # result是summary类型的，需要放入writer中，i步数（x轴）
         if steps > 0 and steps % common.REPORT_STEPS == 0:  # 每训练1000批数据（即迭代1000次，即训练10次整个数据集）存一次模型
