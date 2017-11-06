@@ -71,7 +71,8 @@ OUTPUT_SHAPE = (BATCH_SIZE, 256)
 TRAIN_SIZE = BATCH_SIZE * BATCHES  # 训练一个Epoch的样本数（即整个训练数据集的样本数，也即6400个样本，再即6400张图）
 
 MOMENTUM = 0.9
-REPORT_STEPS = 1000
+# REPORT_STEPS = 1000
+REPORT_STEPS = 10  # todo 原值是1000
 
 # KEEP_PROB = 0.9
 KEEP_PROB = 1.0  # dropout函数的抽样比例

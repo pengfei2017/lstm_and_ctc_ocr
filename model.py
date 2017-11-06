@@ -51,46 +51,47 @@ def convolutional_layers(is_training=True):
     """
     with tf.name_scope('inputs'):
         inputs = tf.placeholder(tf.float32, [None, None, common.OUTPUT_SHAPE[0]], name='inputs')
-        tf.summary.histogram('inputs', inputs)  # 原始数据
         with tf.name_scope('input_expand_dims'):
             x_expanded = tf.expand_dims(inputs, 3)
+            tf.summary.histogram('input', x_expanded)
         with tf.name_scope('input_reshape'):
             image_shaped_input = tf.reshape(x_expanded, [-1, common.OUTPUT_SHAPE[0], common.OUTPUT_SHAPE[1], 1])
             tf.summary.image('images', image_shaped_input,
                              common.BATCH_SIZE)  # 一次显示BATCH_SIZE个图像，即输入样本的个数
-        with tf.name_scope('batch_normalization'):  # 对input进行批标准化
-            # Batch Normalization（批标准化）
-            axes = list(range(len(x_expanded.get_shape()) - 1))
-            input_mean, input_var = tf.nn.moments(
-                x_expanded,
-                axes=axes
-                # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
-            )
-            scale = tf.Variable(tf.ones(input_mean.get_shape()))
-            shift = tf.Variable(tf.zeros(input_mean.get_shape()))
-            epsilon = 0.001
 
-            ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
-
-            def mean_var_with_update():
-                ema_apply_op = ema.apply([input_mean, input_var])
-                with tf.control_dependencies([ema_apply_op]):
-                    return tf.identity(input_mean), tf.identity(input_var)
-
-            # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
-            # 修改后:
-            mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
-                                mean_var_with_update,  # 如果是 True, 更新 mean/var
-                                lambda: (  # 如果是 False, 返回之前 input_mean/input_var 的Moving Average
-                                    ema.average(input_mean),
-                                    ema.average(input_var)
-                                ))
-
-            # 将修改后的 mean / var 放入下面的公式
-            x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
-            tf.summary.histogram('input_mean', input_mean)
-            tf.summary.histogram('input_var', input_var)
-            tf.summary.histogram('input', x_expanded)
+            # with tf.name_scope('batch_normalization'):  # 对input进行批标准化
+            #     # Batch Normalization（批标准化）
+            #     axes = list(range(len(x_expanded.get_shape()) - 1))
+            #     input_mean, input_var = tf.nn.moments(
+            #         x_expanded,
+            #         axes=axes
+            #         # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
+            #     )
+            #     scale = tf.Variable(tf.ones(input_mean.get_shape()))
+            #     shift = tf.Variable(tf.zeros(input_mean.get_shape()))
+            #     epsilon = 0.001
+            #
+            #     ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
+            #
+            #     def mean_var_with_update():
+            #         ema_apply_op = ema.apply([input_mean, input_var])
+            #         with tf.control_dependencies([ema_apply_op]):
+            #             return tf.identity(input_mean), tf.identity(input_var)
+            #
+            #     # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
+            #     # 修改后:
+            #     mean, var = tf.cond(tf.constant(is_training),  # is_training 的值是 True/False
+            #                         mean_var_with_update,  # 如果是 True, 更新 mean/var
+            #                         lambda: (  # 如果是 False, 返回之前 input_mean/input_var 的Moving Average
+            #                             ema.average(input_mean),
+            #                             ema.average(input_var)
+            #                         ))
+            #
+            #     # 将修改后的 mean / var 放入下面的公式
+            #     x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
+            #     tf.summary.histogram('input_mean', input_mean)
+            #     tf.summary.histogram('input_var', input_var)
+            #     tf.summary.histogram('input', x_expanded)
     with tf.name_scope('CNN'):  # CNN中共四层，三次卷积层，一层全链接层
         # First layer
         with tf.name_scope('layer1'):
