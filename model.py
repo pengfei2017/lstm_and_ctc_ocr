@@ -67,7 +67,7 @@ def convolutional_layers(is_training=True):
         # 修改后:
         mean, var = tf.cond(is_training,  # is_training 的值是 True/False
                             mean_var_with_update,  # 如果是 True, 更新 mean/var
-                            lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
+                            lambda: (  # 如果是 False, 返回之前 input_mean/input_var 的Moving Average
                                 ema.average(input_mean),
                                 ema.average(input_var)
                             )
