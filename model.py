@@ -47,34 +47,38 @@ def convolutional_layers(is_training=True):
     with tf.name_scope('batch_normalization'):
         # Batch Normalization（批标准化）
         axes = list(range(len(x_expanded.get_shape()) - 1))
-        fc_mean, fc_var = tf.nn.moments(
+        input_mean, input_var = tf.nn.moments(
             x_expanded,
             axes=axes
             # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
         )
-        scale = tf.Variable(tf.ones(fc_mean.get_shape()))
-        shift = tf.Variable(tf.zeros(fc_mean.get_shape()))
+        scale = tf.Variable(tf.ones(input_mean.get_shape()))
+        shift = tf.Variable(tf.zeros(input_mean.get_shape()))
         epsilon = 0.001
 
         ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
 
         def mean_var_with_update():
-            ema_apply_op = ema.apply([fc_mean, fc_var])
+            ema_apply_op = ema.apply([input_mean, input_var])
             with tf.control_dependencies([ema_apply_op]):
-                return tf.identity(fc_mean), tf.identity(fc_var)
+                return tf.identity(input_mean), tf.identity(input_var)
 
         # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
         # 修改后:
         mean, var = tf.cond(is_training,  # is_training 的值是 True/False
                             mean_var_with_update,  # 如果是 True, 更新 mean/var
                             lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
-                                ema.average(fc_mean),
-                                ema.average(fc_var)
+                                ema.average(input_mean),
+                                ema.average(input_var)
                             )
                             )
 
         # 将修改后的 mean / var 放入下面的公式
-        x_expanded = tf.nn.batch_normalization(x_expanded, fc_mean, fc_var, shift, scale, epsilon)
+        x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
+        tf.summary.scalar('input_mean（均值）', input_mean)
+        tf.summary.scalar('input_var（方差）', input_var)
+        tf.summary.histogram('input', x_expanded)
+        tf.summary.tensor_summary('tensor_input', x_expanded)
     with tf.name_scope('conv'):
         # First layer
         with tf.name_scope('layer1'):
@@ -126,7 +130,43 @@ def convolutional_layers(is_training=True):
                 b_fc1 = bias_variable([common.OUTPUT_SHAPE[1]], name='b')
                 tf.summary.histogram(layer_name + '/biases', b_fc1)
             conv_layer_flat = tf.reshape(h_pool3, [-1, 32 * 8 * common.OUTPUT_SHAPE[1]])
-            features = tf.nn.relu(tf.matmul(conv_layer_flat, W_fc1) + b_fc1)
+            fc_layer_W_b = tf.matmul(conv_layer_flat, W_fc1) + b_fc1
+            with tf.name_scope('batch_normalization'):
+                # Batch Normalization（批标准化）
+                axes = list(range(len(fc_layer_W_b.get_shape()) - 1))
+                fc_mean, fc_var = tf.nn.moments(
+                    fc_layer_W_b,
+                    axes=axes
+                    # 想要 normalize 的维度, [0] 代表 batch 维度 # 如果是图像数据, 可以传入 [0, 1, 2], 相当于求[batch, height, width] 的均值/方差, 注意不要加入 channel 维度
+                )
+                scale = tf.Variable(tf.ones(fc_mean.get_shape()))
+                shift = tf.Variable(tf.zeros(fc_mean.get_shape()))
+                epsilon = 0.001
+
+                ema = tf.train.ExponentialMovingAverage(decay=0.5)  # exponential moving average 的 decay 度
+
+                def mean_var_with_update():
+                    ema_apply_op = ema.apply([fc_mean, fc_var])
+                    with tf.control_dependencies([ema_apply_op]):
+                        return tf.identity(fc_mean), tf.identity(fc_var)
+
+                # 修改前:mean, var = mean_var_with_update()  # 根据新的 batch 数据, 记录并稍微修改之前的 mean/var
+                # 修改后:
+                mean, var = tf.cond(is_training,  # is_training 的值是 True/False
+                                    mean_var_with_update,  # 如果是 True, 更新 mean/var
+                                    lambda: (  # 如果是 False, 返回之前 fc_mean/fc_var 的Moving Average
+                                        ema.average(fc_mean),
+                                        ema.average(fc_var)
+                                    )
+                                    )
+
+                # 将修改后的 mean / var 放入下面的公式
+                fc_layer_W_b = tf.nn.batch_normalization(fc_layer_W_b, fc_mean, fc_var, shift, scale, epsilon)
+                tf.summary.scalar('fc_mean（均值）', fc_mean)
+                tf.summary.scalar('fc_var（方差）', fc_var)
+                tf.summary.histogram('fc_layer_W_b', fc_layer_W_b)
+                tf.summary.tensor_summary('tensor_fc_layer_W_b', fc_layer_W_b)
+            features = tf.nn.relu(fc_layer_W_b)
             tf.summary.histogram(layer_name + '/outputs', features)
     shape = tf.shape(features)
     features = tf.reshape(features, [shape[0], common.OUTPUT_SHAPE[1], 1])  # batchsize * outputshape * 1
