@@ -89,8 +89,8 @@ def convolutional_layers(is_training=True):
 
             # 将修改后的 mean / var 放入下面的公式
             x_expanded = tf.nn.batch_normalization(x_expanded, input_mean, input_var, shift, scale, epsilon)
-            tf.summary.scalar('inputs/batch_normalization/input_mean（均值）', input_mean)
-            tf.summary.scalar('inputs/batch_normalization/input_var（方差）', input_var)
+            tf.summary.scalar('inputs/batch_normalization/input_mean', input_mean)
+            tf.summary.scalar('inputs/batch_normalization/input_var', input_var)
             tf.summary.histogram('inputs/batch_normalization/input', x_expanded)
     with tf.name_scope('CNN'):  # CNN中共四层，三次卷积层，一层全链接层
         # First layer
@@ -173,8 +173,8 @@ def convolutional_layers(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 fc_layer_W_b = tf.nn.batch_normalization(fc_layer_W_b, fc_mean, fc_var, shift, scale, epsilon)
-                tf.summary.scalar(layer_name + 'batch_normalization/fc_mean（均值）', fc_mean)
-                tf.summary.scalar(layer_name + 'batch_normalization/fc_var（方差）', fc_var)
+                tf.summary.scalar(layer_name + 'batch_normalization/fc_mean', fc_mean)
+                tf.summary.scalar(layer_name + 'batch_normalization/fc_var', fc_var)
                 tf.summary.histogram(layer_name + 'batch_normalization/fc_layer_W_b', fc_layer_W_b)
             features = tf.nn.relu(fc_layer_W_b)
     shape = tf.shape(features)
@@ -285,8 +285,8 @@ def get_train_model(is_training=True):
 
                 # 将修改后的 mean / var 放入下面的公式
                 logits = tf.nn.batch_normalization(logits, lstm_fc_mean, lstm_fc_var, shift, scale, epsilon)
-                tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_mean（均值）', lstm_fc_mean)
-                tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_var（方差）', lstm_fc_var)
+                tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_mean', lstm_fc_mean)
+                tf.summary.scalar('LSTM/fc_layer/batch_normalization/lstm_fc_var', lstm_fc_var)
                 tf.summary.histogram('LSTM/fc_layer/batch_normalization/lstm_fc_layer_W_b', logits)
     # Reshaping back to the original shape
     logits = tf.reshape(logits, [batch_s, -1, common.num_classes])
